@@ -1,0 +1,8 @@
+<driversList>
+  <devGroup group="CCDs">
+    <device label="OpenStarShoot Mono III" manufacturer="Orion">
+      <driver name="OpenStarShoot Mono III">indi_openstarshoot</driver>
+      <version>0.1</version>
+    </device>
+  </devGroup>
+</driversList>
