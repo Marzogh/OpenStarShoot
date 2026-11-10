@@ -37,28 +37,28 @@ $(BUILD)/libopenstarshoot.so: $(BUILD)/openstarshoot.o $(BUILD)/platform.o
 $(BUILD)/starshoot-diag: src/cli.c $(BUILD)/libopenstarshoot.a include/openstarshoot.h
 	@printf 'Building diagnostic CLI\n'
 	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(BUILD)/libopenstarshoot.a $(LIBUSB_LIBS) -o $@
-$(BUILD)/test-protocol: tests/test_protocol.c src/openstarshoot.c src/internal.h include/openstarshoot.h $(PLATFORM) $(PLATFORM_HEADERS) | $(BUILD)
+$(BUILD)/test-protocol: tests/test_protocol.c src/openstarshoot.c src/internal.h include/openstarshoot.h $(PLATFORM) $(PLATFORM_HEADERS) tests/assertions.h | $(BUILD)
 	@printf 'Building offline protocol tests\n'
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DOSS_TESTING tests/test_protocol.c src/openstarshoot.c $(PLATFORM) $(LIBUSB_LIBS) -o $@
-$(BUILD)/test-cli-errors: tests/test_cli_errors.c src/cli.c $(BUILD)/libopenstarshoot.a | $(BUILD)
+$(BUILD)/test-cli-errors: tests/test_cli_errors.c src/cli.c $(BUILD)/libopenstarshoot.a tests/assertions.h | $(BUILD)
 	@printf 'Building CLI error-classification tests\n'
 	$(CC) $(CPPFLAGS) $(CFLAGS) $< $(BUILD)/libopenstarshoot.a $(LIBUSB_LIBS) -o $@
-$(BUILD)/test-binning: tests/test_binning.c src/openstarshoot.c src/internal.h include/openstarshoot.h $(PLATFORM) $(PLATFORM_HEADERS) | $(BUILD)
+$(BUILD)/test-binning: tests/test_binning.c src/openstarshoot.c src/internal.h include/openstarshoot.h $(PLATFORM) $(PLATFORM_HEADERS) tests/assertions.h | $(BUILD)
 	@printf 'Building offline binning geometry/acquisition checks\n'
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DOSS_TESTING tests/test_binning.c src/openstarshoot.c $(PLATFORM) $(LIBUSB_LIBS) -o $@
-$(BUILD)/test-capture-cli: tests/test_capture_cli.c tests/test_paths.h src/cli.c src/openstarshoot.c src/internal.h include/openstarshoot.h $(PLATFORM) $(PLATFORM_HEADERS) | $(BUILD)
+$(BUILD)/test-capture-cli: tests/test_capture_cli.c tests/test_paths.h src/cli.c src/openstarshoot.c src/internal.h include/openstarshoot.h $(PLATFORM) $(PLATFORM_HEADERS) tests/assertions.h | $(BUILD)
 	@printf 'Building synthetic CLI capture workflow checks\n'
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DOSS_TESTING tests/test_capture_cli.c src/openstarshoot.c $(PLATFORM) $(LIBUSB_LIBS) -o $@
-$(BUILD)/test-roi: tests/test_roi.c src/openstarshoot.c src/internal.h include/openstarshoot.h $(PLATFORM) $(PLATFORM_HEADERS) | $(BUILD)
+$(BUILD)/test-roi: tests/test_roi.c src/openstarshoot.c src/internal.h include/openstarshoot.h $(PLATFORM) $(PLATFORM_HEADERS) tests/assertions.h | $(BUILD)
 	@printf 'Building offline ROI geometry/acquisition checks\n'
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DOSS_TESTING tests/test_roi.c src/openstarshoot.c $(PLATFORM) $(LIBUSB_LIBS) -o $@
-$(BUILD)/test-cli-roi: tests/test_cli_roi.c src/cli.c src/openstarshoot.c src/internal.h include/openstarshoot.h $(PLATFORM) $(PLATFORM_HEADERS) | $(BUILD)
+$(BUILD)/test-cli-roi: tests/test_cli_roi.c src/cli.c src/openstarshoot.c src/internal.h include/openstarshoot.h $(PLATFORM) $(PLATFORM_HEADERS) tests/assertions.h | $(BUILD)
 	@printf 'Building synthetic CLI ROI transport\n'
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DOSS_TESTING tests/test_cli_roi.c src/openstarshoot.c $(PLATFORM) $(LIBUSB_LIBS) -o $@
-$(BUILD)/test-cooling: tests/test_cooling.c tests/test_paths.h src/cli.c src/openstarshoot.c src/internal.h include/openstarshoot.h $(PLATFORM) $(PLATFORM_HEADERS) | $(BUILD)
+$(BUILD)/test-cooling: tests/test_cooling.c tests/test_paths.h src/cli.c src/openstarshoot.c src/internal.h include/openstarshoot.h $(PLATFORM) $(PLATFORM_HEADERS) tests/assertions.h | $(BUILD)
 	@printf 'Building offline cooler/fan API and CLI checks\n'
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DOSS_TESTING tests/test_cooling.c src/openstarshoot.c $(PLATFORM) $(LIBUSB_LIBS) -o $@
-$(BUILD)/test-open: tests/test_open.c src/openstarshoot.c src/internal.h include/openstarshoot.h $(PLATFORM) $(PLATFORM_HEADERS) | $(BUILD)
+$(BUILD)/test-open: tests/test_open.c src/openstarshoot.c src/internal.h include/openstarshoot.h $(PLATFORM) $(PLATFORM_HEADERS) tests/assertions.h | $(BUILD)
 	@printf 'Building synthetic USB open/close checks\n'
 	$(CC) $(CPPFLAGS) $(CFLAGS) tests/test_open.c $(PLATFORM) $(LIBUSB_LIBS) -o $@
 check: $(BUILD)/test-open $(BUILD)/test-cooling $(BUILD)/test-protocol $(BUILD)/test-cli-errors $(BUILD)/test-binning $(BUILD)/test-capture-cli $(BUILD)/test-roi

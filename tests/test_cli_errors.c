@@ -1,7 +1,7 @@
 #define main cli_program_main
 #include "../src/cli.c"
 #undef main
-#include <assert.h>
+#include "assertions.h"
 int main(void) {
     output o={0};o.summary=tmpfile();assert(o.summary);
     puts("CLI errors: capture limit survives successful cleanup");

@@ -4,7 +4,7 @@
 #include "../src/cli.c"
 #undef main
 #include "internal.h"
-#include <assert.h>
+#include "assertions.h"
 static oss_camera c;
 static unsigned op,state;
 static size_t wire;
@@ -13,7 +13,7 @@ static int mocked_transfer(void *u,uint8_t ep,uint8_t *b,int n,int *actual,unsig
  (void)u;assert(timeout);
  if(ep==8){assert(n==6&&b[0]==0xa5);op=b[1];if(op==11)assert(!memcmp(b,(bin==2?(uint8_t[]){0xa5,11,0,51,1,12}:(uint8_t[]){0xa5,11,0,101,2,12}),6));if(op==3)state=2;if(op==5)state=0;*actual=6;return 0;}
  assert(ep==0x82);
- if(n==8){memset(b,0,8);b[0]=0xa5;b[2]=(uint8_t)op;b[4]=op==1?5:op==7?128:op==2?state:1;*actual=8;return 0;}
+ if(n==8){memset(b,0,8);b[0]=0xa5;b[2]=(uint8_t)op;b[4]=(uint8_t)(op==1?5:op==7?128:op==2?state:1);*actual=8;return 0;}
  assert(n==1024);size_t count=(bin==2?768624:1502832)-wire;if(count>1024)count=1024;assert(count);
  for(size_t i=0;i<count;i++){size_t offset=wire+i,word=offset/2;uint16_t v=(uint16_t)(((word/1434+101)*137+(word%1434)*31)^0xabcd);b[i]=(uint8_t)(offset&1?v>>8:v);}
  wire+=count;*actual=(int)count;return 0;

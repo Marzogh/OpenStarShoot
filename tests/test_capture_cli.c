@@ -6,7 +6,7 @@
 #undef oss_open
 #undef oss_close
 #include "internal.h"
-#include <assert.h>
+#include "assertions.h"
 #include "test_paths.h"
 
 typedef struct {unsigned bin,opcode,state,reads;size_t wire;} fixture;
@@ -35,9 +35,9 @@ int mocked_open(oss_camera **out,const oss_open_options *o){
     camera.trace=o->trace;camera.trace_user=o->trace_user;camera.test_transfer=fake;camera.test_user=&f;*out=&camera;return 0;
 }
 void mocked_close(oss_camera *c){if(c)assert(c==&camera && c->phase==OSS_IDLE && f.state==0);}
-int main(int argc,char **argv) {
+int main(int argc,char **arguments) {
     assert(argc==2);
-    const char *base=argv[1];
+    const char *base=arguments[1];
     const char *names[]={"light.raw","usb-transfers.tsv","usb-out-requests.bin","usb-in.bin","stages.tsv","read-ahead.bin","geometry.json"};
     for(unsigned bin=1;bin<=2;bin++) {
         char dir[128],path[256];snprintf(dir,sizeof(dir),"%s/bin%u",base,bin);f=(fixture){.bin=bin};

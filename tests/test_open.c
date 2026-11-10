@@ -13,7 +13,7 @@
 #define libusb_claim_interface mock_claim_interface
 #define libusb_release_interface mock_release_interface
 #include "../src/openstarshoot.c"
-#include <assert.h>
+#include "assertions.h"
 #include <stdio.h>
 
 static int kernel_result,claims,releases,closes,exits;

@@ -6,7 +6,7 @@
 #undef oss_open
 #undef oss_close
 #include "internal.h"
-#include <assert.h>
+#include "assertions.h"
 #include "test_paths.h"
 
 typedef struct {unsigned calls,opcode,mask,writes;int fault;uint8_t result;} fixture;
@@ -41,9 +41,9 @@ int mocked_open(oss_camera **out,const oss_open_options *o) {
     camera.trace=o->trace;camera.trace_user=o->trace_user;*out=&camera;return 0;
 }
 void mocked_close(oss_camera *c) {(void)c;}
-int main(int argc,char **argv) {
+int main(int argc,char **arguments) {
     assert(argc==2);
-    const char *base=argv[1];
+    const char *base=arguments[1];
     puts("Cooling encoding: all cooler/fan pairs, including result bytes with no defined success meaning");
     for(unsigned mask=0;mask<4;mask++)for(unsigned k=0;k<3;k++) {
         f=(fixture){.mask=mask,.result=(uint8_t[]){0,1,255}[k]};oss_camera c=fresh();oss_reply r;
