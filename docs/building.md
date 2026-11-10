@@ -2,7 +2,7 @@
 
 The C library and diagnostic CLI use C11 and libusb 1.0. CMake 3.20 or newer builds static and shared libraries on Linux, Apple Silicon macOS and Windows x64. INDI remains an optional Linux Makefile target.
 
-Linux has physical camera validation. macOS and Windows builds and offline tests do not establish camera compatibility on those systems. USB access and acquisition require separate hardware validation. The existing camera limitations still apply.
+Linux has physical camera validation. On Apple Silicon macOS, native USB connection, one full-frame unbinned acquisition and FITS export have been verified. Binned and ROI acquisitions have not been hardware-tested on macOS. Windows has build and offline-test coverage; physical camera operation remains unverified. The existing camera limitations still apply.
 
 ## Linux
 
