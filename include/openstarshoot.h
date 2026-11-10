@@ -2,6 +2,16 @@
 #define OPENSTARSHOOT_H
 #include <stddef.h>
 #include <stdint.h>
+/* Define OSS_SHARED when consuming the Windows DLL. Static users need no define. */
+#if defined(_WIN32) && defined(OSS_SHARED)
+# ifdef OSS_BUILDING_LIBRARY
+#  define OSS_API __declspec(dllexport)
+# else
+#  define OSS_API __declspec(dllimport)
+# endif
+#else
+# define OSS_API
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,18 +52,18 @@ typedef struct {
     int result; /* partial bytes remain valid when result != 0 */
 } oss_capture_result;
 
-int oss_open(oss_camera **out, const oss_open_options *options);
+OSS_API int oss_open(oss_camera **out, const oss_open_options *options);
 /* Close releases the interface. It never silently sends a camera command. */
-void oss_close(oss_camera *camera);
-const char *oss_error(int code);
-oss_phase oss_get_phase(const oss_camera *camera);
-int oss_identify(oss_camera *, uint8_t *profile, oss_reply *);
+OSS_API void oss_close(oss_camera *camera);
+OSS_API const char *oss_error(int code);
+OSS_API oss_phase oss_get_phase(const oss_camera *camera);
+OSS_API int oss_identify(oss_camera *, uint8_t *profile, oss_reply *);
 /* Normal connection initialization queries 01/07/02, requires profile 5 and
  * a non-exposing state, and preserves unreadable offset/cooler/fan settings. */
-int oss_initialize(oss_camera *, uint8_t *capability, oss_status *status);
-int oss_get_status(oss_camera *, oss_status *, oss_reply *);
-int oss_get_capability(oss_camera *, uint8_t *, oss_reply *);
-int oss_get_counter(oss_camera *, uint16_t *, oss_reply *);
+OSS_API int oss_initialize(oss_camera *, uint8_t *capability, oss_status *status);
+OSS_API int oss_get_status(oss_camera *, oss_status *, oss_reply *);
+OSS_API int oss_get_capability(oss_camera *, uint8_t *, oss_reply *);
+OSS_API int oss_get_counter(oss_camera *, uint16_t *, oss_reply *);
 /* ROI in zero-based unbinned active-sensor pixels. Bin 2 requires even
  * X, Y, width and height; output dimensions are width/2 and height/2. Horizontal selection is a
  * software crop; the device always transfers full-width rows. */
@@ -62,36 +72,36 @@ typedef struct {
     unsigned raw_width, raw_height, active_width, active_height;
     size_t raw_bytes;
 } oss_roi_geometry;
-int oss_get_roi_geometry(const oss_roi *, oss_roi_geometry *);
+OSS_API int oss_get_roi_geometry(const oss_roi *, oss_roi_geometry *);
 /* Decode host-endian active uint16 samples; input/output must not overlap. */
-int oss_reconstruct_roi(const oss_roi *, const uint8_t *raw, size_t raw_bytes,
+OSS_API int oss_reconstruct_roi(const oss_roi *, const uint8_t *raw, size_t raw_bytes,
                         uint16_t *output, size_t output_samples);
 /* Bin-aware variants retain the bin-1 functions as compatibility wrappers. */
-int oss_get_roi_geometry_bin(unsigned bin, const oss_roi *, oss_roi_geometry *);
-int oss_reconstruct_roi_bin(unsigned bin, const oss_roi *, const uint8_t *raw,
+OSS_API int oss_get_roi_geometry_bin(unsigned bin, const oss_roi *, oss_roi_geometry *);
+OSS_API int oss_reconstruct_roi_bin(unsigned bin, const oss_roi *, const uint8_t *raw,
                             size_t raw_bytes, uint16_t *output, size_t output_samples);
-int oss_start_exposure_roi(oss_camera *, const oss_exposure *, const oss_roi *, oss_reply *);
-int oss_start_exposure(oss_camera *, const oss_exposure *, oss_reply *);
-int oss_wait_ready(oss_camera *, unsigned deadline_ms, oss_cancel_fn, void *);
-int oss_capture_raw(oss_camera *, oss_frame_fn, void *, unsigned deadline_ms,
+OSS_API int oss_start_exposure_roi(oss_camera *, const oss_exposure *, const oss_roi *, oss_reply *);
+OSS_API int oss_start_exposure(oss_camera *, const oss_exposure *, oss_reply *);
+OSS_API int oss_wait_ready(oss_camera *, unsigned deadline_ms, oss_cancel_fn, void *);
+OSS_API int oss_capture_raw(oss_camera *, oss_frame_fn, void *, unsigned deadline_ms,
                     oss_cancel_fn, void *, oss_capture_result *);
 /* Command 05. No automatic protocol resynchronization or reset on failure. */
-int oss_stop(oss_camera *, oss_reply *);
+OSS_API int oss_stop(oss_camera *, oss_reply *);
 /* Explicit setters only. There is no setting readback or inferred restore.
  * Callers must explicitly choose both cooling settings and any restoration.
  * Offset checks require a known prior value for restoration. */
-int oss_set_offset(oss_camera *, int offset, oss_reply *);
+OSS_API int oss_set_offset(oss_camera *, int offset, oss_reply *);
 /* Command 0C always writes both controls. No readback or cached state.
  * An accepted reply confirms protocol framing, not physical operation. */
 typedef enum { OSS_COOLER_OFF=0, OSS_COOLER_ON=1 } oss_cooler;
 typedef enum { OSS_FAN_LOW=0, OSS_FAN_HIGH=1 } oss_fan;
-int oss_set_cooling(oss_camera *, oss_cooler, oss_fan, oss_reply *);
+OSS_API int oss_set_cooling(oss_camera *, oss_cooler, oss_fan, oss_reply *);
 /* Low-level compatibility API: bit 0 = cooler on, bit 1 = fan high. */
-int oss_set_cooling_flags(oss_camera *, unsigned flags, oss_reply *);
+OSS_API int oss_set_cooling_flags(oss_camera *, unsigned flags, oss_reply *);
 /* Profile-5 bin-1 vertical window: active Y/height, raw height is height+12.
  * oss_start_exposure_roi configures this automatically; horizontal ROI is
  * applied only during reconstruction. Selected 512x512 windows are bench-tested; other windows remain experimental. */
-int oss_set_vertical_window(oss_camera *, unsigned y, unsigned height, oss_reply *);
+OSS_API int oss_set_vertical_window(oss_camera *, unsigned y, unsigned height, oss_reply *);
 
 /* Pure protocol helpers for reproducible offline tests and integrations. */
 /* Full-frame geometry. raw dimensions describe the unchanged USB samples,
@@ -101,16 +111,16 @@ typedef struct {
     unsigned raw_width, raw_height, active_width, active_height;
     size_t raw_bytes;
 } oss_image_geometry;
-int oss_get_image_geometry(unsigned bin, oss_image_geometry *);
+OSS_API int oss_get_image_geometry(unsigned bin, oss_image_geometry *);
 /* Decode to host-endian uint16 active pixels without modifying raw input.
  * raw_bytes must be exact; output_samples is capacity in uint16 samples.
  * Input/output must not overlap. No calibration or orientation change.
  * Bin 2 selects alternate raw columns and clears bit 0 as required by
  * the supported reconstruction contract; it is not software 2x2 summing. */
-int oss_reconstruct_active(unsigned bin, const uint8_t *raw, size_t raw_bytes,
+OSS_API int oss_reconstruct_active(unsigned bin, const uint8_t *raw, size_t raw_bytes,
                            uint16_t *output, size_t output_samples);
-int oss_encode_exposure(const oss_exposure *, uint8_t request[6]);
-int oss_decode_reply(uint8_t opcode, const uint8_t *, size_t, oss_reply *);
+OSS_API int oss_encode_exposure(const oss_exposure *, uint8_t request[6]);
+OSS_API int oss_decode_reply(uint8_t opcode, const uint8_t *, size_t, oss_reply *);
 #ifdef __cplusplus
 }
 #endif

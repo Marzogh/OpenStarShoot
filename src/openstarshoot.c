@@ -2,7 +2,7 @@
 #include "internal.h"
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
+#include "platform.h"
 
 #define OUT_EP 0x08
 #define IN_EP 0x82
@@ -10,11 +10,6 @@
 #define BIN2_RAW_LIMIT (1434u * 532u * 2u)
 static int configure_full_frame(oss_camera *, unsigned bin, oss_reply *);
 
-static uint64_t ms_now(void) {
-    struct timespec t;
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    return (uint64_t)t.tv_sec*1000u+(uint64_t)t.tv_nsec/1000000u;
-}
 static int transfer(oss_camera *c, uint8_t ep, uint8_t *data, int n,
                     int *actual, unsigned timeout) {
     int rc;
@@ -109,7 +104,9 @@ int oss_open(oss_camera **out,const oss_open_options *o) {
     if(rc) goto fail;
     if(config!=1) {rc=OSS_ESTATE;goto fail;}
     rc=libusb_kernel_driver_active(c->device,0);
-    if(rc!=0) {rc=rc>0 ? LIBUSB_ERROR_BUSY:rc;goto fail;}
+    /* This query is unavailable on backends such as Windows. Claiming the
+     * interface remains mandatory; never detach a driver or reset the camera. */
+    if(rc!=0 && rc!=LIBUSB_ERROR_NOT_SUPPORTED) {rc=rc>0 ? LIBUSB_ERROR_BUSY:rc;goto fail;}
     rc=libusb_claim_interface(c->device,0);
     if(rc) goto fail;
     c->claimed=1;
@@ -287,17 +284,16 @@ int oss_start_exposure_roi(oss_camera *c,const oss_exposure *e,const oss_roi *ro
 int oss_wait_ready(oss_camera *c,unsigned deadline,oss_cancel_fn cancel,void *user) {
     uint64_t end;
     if(!c || c->phase!=OSS_EXPOSING || deadline<1 || deadline>120000) return OSS_EINVAL;
-    end=ms_now()+deadline;
+    end=oss_monotonic_ms()+deadline;
     do {
         oss_status s;int rc;
-        struct timespec nap={0,100000000};
         if(cancel && cancel(user)) return OSS_ECANCELLED;
         rc=oss_get_status(c,&s,NULL);
         if(rc) return rc;
         if(s.state==0 || s.state==2) {c->phase=OSS_READY;return 0;}
         if(s.state!=1) return OSS_EPROTO;
-        nanosleep(&nap,NULL);
-    } while(ms_now()<end);
+        oss_sleep_ms(100);
+    } while(oss_monotonic_ms()<end);
     return OSS_ELIMIT;
 }
 int oss_capture_raw(oss_camera *c,oss_frame_fn sink,void *sink_user,unsigned deadline,
@@ -310,9 +306,9 @@ int oss_capture_raw(oss_camera *c,oss_frame_fn sink,void *sink_user,unsigned dea
     res->expected_bytes=c->expected_bytes;
     rc=exchange(c,4,NULL,&r);
     if(rc) {res->result=rc;return rc;}
-    c->phase=OSS_READING;end=ms_now()+deadline;
+    c->phase=OSS_READING;end=oss_monotonic_ms()+deadline;
     while(res->bytes<res->expected_bytes) {
-        int n=0;uint64_t now=ms_now();unsigned timeout;
+        int n=0;uint64_t now=oss_monotonic_ms();unsigned timeout;
         if(cancel && cancel(cancel_user)) {rc=OSS_ECANCELLED;break;}
         if(now>=end) {rc=OSS_ELIMIT;break;}
         timeout=(unsigned)(end-now);if(timeout>4000)timeout=4000;

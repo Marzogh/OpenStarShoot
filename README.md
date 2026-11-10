@@ -4,6 +4,8 @@ OpenStarShoot is an open-source Linux driver for the **Orion StarShoot Deep Spac
 
 The driver supports full-frame imaging and regions of interest (ROIs) at **1×1 and 2×2 binning**, including binned subframes. It produces unsigned 16-bit FITS images and preserves the original raw camera data.
 
+The native library and diagnostic CLI also have CMake builds for Apple Silicon macOS and Windows x64/MSVC. See [native builds and offline tests](docs/building.md). Camera operation on these platforms awaits hardware validation; INDI support remains Linux-only.
+
 ## Install for KStars/Ekos
 
 These commands are for **Debian 13**, where OpenStarShoot has been built and tested. Other Linux distributions will need the corresponding development packages.

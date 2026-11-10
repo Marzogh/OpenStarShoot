@@ -1,8 +1,13 @@
+#define oss_open mocked_open
+#define oss_close mocked_close
 #define main cli_program_main
 #include "../src/cli.c"
 #undef main
+#undef oss_open
+#undef oss_close
 #include "internal.h"
 #include <assert.h>
+#include "test_paths.h"
 
 typedef struct {unsigned bin,opcode,state,reads;size_t wire;} fixture;
 static fixture f;
@@ -25,13 +30,14 @@ static int fake(void *u,uint8_t ep,uint8_t *b,int n,int *actual,unsigned timeout
     for(size_t k=0;k<count;k++)b[k]=(uint8_t)((s->wire+k)%251+1);
     s->wire+=count;s->reads++;*actual=(int)count;return 0;
 }
-int __wrap_oss_open(oss_camera **out,const oss_open_options *o){
+int mocked_open(oss_camera **out,const oss_open_options *o){
     opens++;memset(&camera,0,sizeof(camera));camera.synchronized=1;camera.phase=OSS_IDLE;
     camera.trace=o->trace;camera.trace_user=o->trace_user;camera.test_transfer=fake;camera.test_user=&f;*out=&camera;return 0;
 }
-void __wrap_oss_close(oss_camera *c){if(c)assert(c==&camera && c->phase==OSS_IDLE && f.state==0);}
-int main(void) {
-    char base[]="/tmp/openstarshoot-cli-XXXXXX";assert(mkdtemp(base));
+void mocked_close(oss_camera *c){if(c)assert(c==&camera && c->phase==OSS_IDLE && f.state==0);}
+int main(int argc,char **argv) {
+    assert(argc==2);
+    const char *base=argv[1];
     const char *names[]={"light.raw","usb-transfers.tsv","usb-out-requests.bin","usb-in.bin","stages.tsv","read-ahead.bin","geometry.json"};
     for(unsigned bin=1;bin<=2;bin++) {
         char dir[128],path[256];snprintf(dir,sizeof(dir),"%s/bin%u",base,bin);f=(fixture){.bin=bin};
@@ -52,5 +58,5 @@ int main(void) {
         struct stat st;assert(stat(dir,&st) && errno==ENOENT);
     }
     puts("PASS: unaligned bin-2 ROI rejected in either option order before output creation or USB open");
-    assert(!rmdir(base));puts("CLI binning workflow passed. All USB responses were simulated; no camera opened.");return 0;
+    puts("CLI binning workflow passed. All USB responses were simulated; no camera opened.");return 0;
 }

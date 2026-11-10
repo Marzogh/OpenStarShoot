@@ -1,14 +1,12 @@
 #define _POSIX_C_SOURCE 200809L
 #include "openstarshoot.h"
+#include "platform.h"
 #include <errno.h>
-#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <time.h>
-#include <unistd.h>
 
 typedef struct {
     FILE *trace,*tx,*rx,*image,*summary;
@@ -20,16 +18,13 @@ typedef struct {
 static volatile sig_atomic_t interrupted;
 static void on_signal(int s) {(void)s;interrupted=1;}
 static int cancelled(void *u) {(void)u;return interrupted!=0;}
-static double clock_seconds(clockid_t id) {
-    struct timespec t;clock_gettime(id,&t);return (double)t.tv_sec+(double)t.tv_nsec/1e9;
-}
 static void trace_usb(void *user,uint8_t ep,const uint8_t *data,size_t requested,size_t actual,int rc) {
     output *o=user;FILE *f=ep&0x80 ? o->rx:o->tx;
     size_t *offset=ep&0x80 ? &o->rx_offset:&o->tx_offset;
     size_t saved=ep&0x80 ? actual:requested;
     if(fwrite(data,1,saved,f)!=saved || fflush(f))o->io_error=1;
     if(fprintf(o->trace,"%u\t%.9f\t%.9f\t%02x\t%zu\t%zu\t%d\t%zu\t%zu\n",
-       ++o->trace_count,clock_seconds(CLOCK_REALTIME),clock_seconds(CLOCK_MONOTONIC),
+       ++o->trace_count,oss_realtime_seconds(),oss_monotonic_seconds(),
        ep,requested,actual,rc,*offset,saved)<0 || fflush(o->trace))o->io_error=1;
     *offset+=saved;
 }
@@ -42,11 +37,9 @@ static int save_image(void *user,const uint8_t *data,size_t bytes) {
     return 0;
 }
 static FILE *new_file(const char *dir,const char *name) {
-    char path[4096];int fd;
+    char path[4096];
     if(snprintf(path,sizeof(path),"%s/%s",dir,name)>=(int)sizeof(path))return NULL;
-    fd=open(path,O_WRONLY|O_CREAT|O_EXCL,0644);
-    if(fd<0)return NULL;
-    FILE *f=fdopen(fd,"wb");if(!f)close(fd);return f;
+    return oss_create_file(path);
 }
 static void report(output *o,const char *stage,int rc,const char *detail) {
     if(rc && !o->first_error)o->first_error=rc;
@@ -127,7 +120,7 @@ int main(int argc,char **argv) {
         if(argc!=5 || parse_uint(argv[3],0,3,&mask) || parse_uint(argv[4],0,3,&prior_mask)) {usage();return 2;}
     } else if(!is_info || argc!=3) {usage();return 2;}
     /* mkdir is the one-pass guard. A failed/partial run is never overwritten. */
-    if(mkdir(argv[2],0755)) {perror("Create new output directory");return 2;}
+    if(oss_make_directory(argv[2])) {perror("Create new output directory");return 2;}
     o.trace=new_file(argv[2],"usb-transfers.tsv");o.tx=new_file(argv[2],"usb-out-requests.bin");
     o.rx=new_file(argv[2],"usb-in.bin");o.summary=new_file(argv[2],"stages.tsv");
     if(!o.trace||!o.tx||!o.rx||!o.summary) {perror("Open evidence files");failed=1;goto finish;}
@@ -153,9 +146,9 @@ int main(int argc,char **argv) {
     report(&o,"initialize",rc,rc ? "Initialization incomplete; no exposure attempted":detail);
     if(rc||o.io_error) {failed=1;goto cleanup;}
     if(is_info||is_pass) {
-        uint16_t a=0,b=0;struct timespec nap={0,100000000};
+        uint16_t a=0,b=0;
         rc=oss_get_counter(camera,&a,NULL);report(&o,"counter-before",rc,"");
-        if(!rc) {nanosleep(&nap,NULL);rc=oss_get_counter(camera,&b,NULL);}
+        if(!rc) {oss_sleep_ms(100);rc=oss_get_counter(camera,&b,NULL);}
         snprintf(detail,sizeof(detail),"before=%u after=%u modulo-delta=%u; nominal 100 ms interval",a,b,(uint16_t)(b-a));
         report(&o,"counter-after",rc,detail);
         if(rc||o.io_error) {failed=1;goto cleanup;}

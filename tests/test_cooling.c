@@ -1,8 +1,13 @@
+#define oss_open mocked_open
+#define oss_close mocked_close
 #define main cli_program_main
 #include "../src/cli.c"
 #undef main
+#undef oss_open
+#undef oss_close
 #include "internal.h"
 #include <assert.h>
+#include "test_paths.h"
 
 typedef struct {unsigned calls,opcode,mask,writes;int fault;uint8_t result;} fixture;
 static fixture f;
@@ -31,12 +36,14 @@ static oss_camera fresh(void) {
     oss_camera c={0};c.synchronized=1;c.initialized=1;c.profile=5;c.phase=OSS_IDLE;
     c.test_transfer=fake;c.test_user=&f;return c;
 }
-int __wrap_oss_open(oss_camera **out,const oss_open_options *o) {
+int mocked_open(oss_camera **out,const oss_open_options *o) {
     opens++;camera=fresh();camera.initialized=0;
     camera.trace=o->trace;camera.trace_user=o->trace_user;*out=&camera;return 0;
 }
-void __wrap_oss_close(oss_camera *c) {(void)c;}
-int main(void) {
+void mocked_close(oss_camera *c) {(void)c;}
+int main(int argc,char **argv) {
+    assert(argc==2);
+    const char *base=argv[1];
     puts("Cooling encoding: all cooler/fan pairs, including result bytes with no defined success meaning");
     for(unsigned mask=0;mask<4;mask++)for(unsigned k=0;k<3;k++) {
         f=(fixture){.mask=mask,.result=(uint8_t[]){0,1,255}[k]};oss_camera c=fresh();oss_reply r;
@@ -61,7 +68,6 @@ int main(void) {
         unsigned before=f.calls;assert(oss_set_cooling(&c,OSS_COOLER_OFF,OSS_FAN_LOW,NULL)==OSS_ESTATE);assert(f.calls==before);
     }
     puts("Cooling CLI: named pairs write once and leave the requested state; no exposure, stop or implicit restore");
-    char base[]="/tmp/openstarshoot-cooling-XXXXXX";assert(mkdtemp(base));
     const char *files[]={"usb-transfers.tsv","usb-out-requests.bin","usb-in.bin","stages.tsv"};
     for(unsigned mask=0;mask<4;mask++) {
         char dir[256],path[512];snprintf(dir,sizeof(dir),"%s/state%u",base,mask);
@@ -74,6 +80,6 @@ int main(void) {
     char dir[256];snprintf(dir,sizeof(dir),"%s/invalid",base);
     char *bad[]={"starshoot-diag","cooling-set",dir,"on","off",NULL};
     unsigned before=opens;assert(cli_program_main(5,bad)==2);assert(opens==before);
-    struct stat st;assert(stat(dir,&st) && errno==ENOENT);assert(!rmdir(base));
+    struct stat st;assert(stat(dir,&st) && errno==ENOENT);
     puts("PASS: cooling library and normal CLI checks; all USB responses simulated, no camera opened.");return 0;
 }
