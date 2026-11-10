@@ -9,7 +9,7 @@ int main(int argc,char **argv) {
     const unsigned char bytes[]={0,10,13,26,128,255};
     unsigned char readback[sizeof(bytes)];
     assert(argc==2);
-    setvbuf(stdout,NULL,_IOLBF,0);
+    oss_set_console_buffering();
     puts("Platform: monotonic clock, wall clock and bounded sleep");
     uint64_t before=oss_monotonic_ms();
     double seconds=oss_monotonic_seconds();

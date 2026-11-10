@@ -61,8 +61,9 @@ $(BUILD)/test-cooling: tests/test_cooling.c tests/test_paths.h src/cli.c src/ope
 $(BUILD)/test-open: tests/test_open.c src/openstarshoot.c src/internal.h include/openstarshoot.h $(PLATFORM) $(PLATFORM_HEADERS) tests/assertions.h | $(BUILD)
 	@printf 'Building synthetic USB open/close checks\n'
 	$(CC) $(CPPFLAGS) $(CFLAGS) tests/test_open.c $(PLATFORM) $(LIBUSB_LIBS) -o $@
-check: $(BUILD)/test-open $(BUILD)/test-cooling $(BUILD)/test-protocol $(BUILD)/test-cli-errors $(BUILD)/test-binning $(BUILD)/test-capture-cli $(BUILD)/test-roi
+check: $(BUILD)/starshoot-diag $(BUILD)/test-open $(BUILD)/test-cooling $(BUILD)/test-protocol $(BUILD)/test-cli-errors $(BUILD)/test-binning $(BUILD)/test-capture-cli $(BUILD)/test-roi
 	@printf 'Running offline checks; no hardware access\n'
+	$(PYTHON) tests/test_cli_usage.py $(BUILD)/starshoot-diag
 	$(BUILD)/test-open
 	$(PYTHON) tests/run_in_temp.py $(BUILD)/test-cooling
 	$(BUILD)/test-protocol

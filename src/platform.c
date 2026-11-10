@@ -24,6 +24,11 @@ double oss_realtime_seconds(void) {
     return (double)(ticks.QuadPart-116444736000000000ULL)/10000000.0;
 }
 void oss_sleep_ms(unsigned milliseconds) { Sleep(milliseconds); }
+void oss_set_console_buffering(void) {
+    /* MSVC treats line buffering as full buffering and rejects a zero size. */
+    setvbuf(stdout,NULL,_IONBF,0);
+    setvbuf(stderr,NULL,_IONBF,0);
+}
 int oss_make_directory(const char *path) { return _mkdir(path); }
 FILE *oss_create_file(const char *path) {
     int fd=_open(path,_O_WRONLY|_O_CREAT|_O_EXCL|_O_BINARY,_S_IREAD|_S_IWRITE);
@@ -55,6 +60,10 @@ double oss_realtime_seconds(void) {
 void oss_sleep_ms(unsigned milliseconds) {
     struct timespec nap={(time_t)(milliseconds/1000),(long)(milliseconds%1000)*1000000L};
     nanosleep(&nap,NULL);
+}
+void oss_set_console_buffering(void) {
+    setvbuf(stdout,NULL,_IOLBF,0);
+    setvbuf(stderr,NULL,_IOLBF,0);
 }
 int oss_make_directory(const char *path) { return mkdir(path,0755); }
 FILE *oss_create_file(const char *path) {

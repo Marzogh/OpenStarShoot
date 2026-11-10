@@ -84,7 +84,7 @@ int main(int argc,char **argv) {
     oss_cooler cooler=OSS_COOLER_OFF;oss_fan fan=OSS_FAN_LOW;
     char detail[512];oss_capture_result frame={0};oss_image_geometry geometry={0};
     oss_roi roi={0,0,1392,1040};int has_roi=0,has_bin=0;
-    setvbuf(stdout,NULL,_IOLBF,0);setvbuf(stderr,NULL,_IOLBF,0);
+    oss_set_console_buffering();
     if(argc<3){usage();return 2;}
     is_pass=!strcmp(argv[1],"pass");is_capture=!strcmp(argv[1],"capture");
     is_info=!strcmp(argv[1],"info");is_offset=!strcmp(argv[1],"offset");is_cooling=!strcmp(argv[1],"cooling");

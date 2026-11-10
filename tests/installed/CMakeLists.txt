@@ -24,3 +24,7 @@ foreach(kind IN ITEMS STATIC SHARED)
     endif()
     add_test(NAME installed_${kind} COMMAND consumer_${kind})
 endforeach()
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+find_program(OSS_CLI NAMES starshoot-diag REQUIRED)
+add_test(NAME installed_cli_usage COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../test_cli_usage.py ${OSS_CLI})

@@ -84,6 +84,8 @@ if(BUILD_TESTING)
         oss_test(test_link_${kind})
         add_test(NAME link_${kind} COMMAND test_link_${kind})
     endforeach()
+    add_test(NAME cli_usage COMMAND ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_cli_usage.py $<TARGET_FILE:starshoot-diag>)
     option(OSS_TEST_FITS "Run the existing NumPy/Astropy offline FITS regressions" ON)
     if(OSS_TEST_FITS)
         execute_process(COMMAND ${Python3_EXECUTABLE} -c "import numpy; import astropy"
